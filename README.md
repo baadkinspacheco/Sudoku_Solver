@@ -1,2 +1,2 @@
-# Sudoku_Solver_JavaVersion
+# Sudoku_Solver
 Solves a sudoku puzzle in the console. 
