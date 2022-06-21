@@ -1,3 +1,34 @@
+/*
+ * AUTHOR: Brooke Adkins
+ * DESCRIPTION: This program solves a Sudoku puzzle.
+ * The user can input their Sudoku puzzle as a file in the 
+ * command line. The program prints out the most completed version  
+ * of the puzzle in the console. If the program runs out of possibilities
+ * the user can add more values into the puzzle.
+ * 
+ * USAGE:
+ * java PuzzleMain file
+ * 
+ * The file passed in as an argument will look something like this.s
+ * 
+ * ------------ EXAMPLE Input -------------
+ * Input file:
+ * ----------------------------------------
+ * | 2,6,4,0,1,5,8,3,9
+ * | 0,3,7,8,9,2,6,4,5
+ * | 5,9,8,0,0,6,0,7,1
+ * | 4,2,3,1,7,8,5,9,0
+ * | 8,1,6,0,4,0,7,2,3
+ * | 7,5,9,6,2,3,0,0,0
+ * | 3,7,5,2,0,0,9,6,4
+ * | 9,8,0,3,6,4,1,0,7 
+ * | 6,0,1,9,5,7,0,8,2
+ * ----------------------------------------
+ * 
+ * The lines above are supported by this program. 
+ * 0 represents empty coordinates on the grid.
+ * 
+ */
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -32,6 +63,7 @@ public class PuzzleMain {
 		// Print out the puzzle
 		System.out.println();
 		printPuzzle(myPuzzle);
+		System.out.println("Congratulations you did it!");
 }
 	
 	/*
@@ -79,7 +111,6 @@ public class PuzzleMain {
 		// Prints out the current puzzle
 		printPuzzle(myPuzzle);
 		System.out.println();
-	
 		
 		// User can add additional value if it is valid
 		System.out.println("Please enter another value in the form '(x,y) 8' to complete puzzle \n"
@@ -91,11 +122,24 @@ public class PuzzleMain {
 		int x = Integer.valueOf(String.valueOf(vals[0].charAt(1)));
 		int y = Integer.valueOf(String.valueOf(vals[0].charAt(3)));
 		int val = Integer.valueOf(String.valueOf(vals[1]));
+		
+		// Checks to see if the position has a zero
+		if (myPuzzle.get(x).get(y) == 0) {
+			// Check to make sure the value works in the row and column
+			// if possibleRowColumn returns 0, it means value wasn't correct
+			// -------------------------------------------------------------
+			// TODO this does not properly check of the value was correct
+			if (possibleRowColumn(x, y, val, myPuzzle) != 0) {
+				// Adds value to the grid
+				myPuzzle.get(x).set(y, val);
+				//solve(myPuzzle);
+			} else {
+				System.out.println("Value was incorrect, please try another.");
+			}
+		} else {
+			System.out.println("Invalid position, please try another x,y.");
+		}
 			
-		// Adds value to the grid
-		// Need to make a check that value is valid
-		myPuzzle.get(x).set(y, val);
-		solve(myPuzzle);
 	}
 	
 	/*
