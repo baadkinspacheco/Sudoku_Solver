@@ -2,9 +2,7 @@
  * AUTHOR: Brooke Adkins
  * DESCRIPTION: This program solves a Sudoku puzzle.
  * The user can input their Sudoku puzzle as a file in the 
- * command line. The program prints out the most completed version  
- * of the puzzle in the console. If the program runs out of possibilities
- * the user can add more values into the puzzle.
+ * command line. The completed puzzle is shown to the user.
  * 
  * USAGE:
  * java PuzzleMain file
@@ -31,17 +29,22 @@
  */
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 public class PuzzleMain {
 	
 	static int ROW_SIZE = 9; // number of rows
 	static int COL_SIZE = 9; // number of columns
 	static int QUADRANT_SIZE = 3; // size of the quadrants
+	static int BOARD_SIZE = 9; // size if of the board
 
 	public static void main(String[] args) {
 		
@@ -49,21 +52,14 @@ public class PuzzleMain {
 		List<List<Integer>> myPuzzle;
 		myPuzzle = readFile(args[0]);
 		
-		// Iterate through the puzzle and fill the puzzle with values
-		solve(myPuzzle);
-
-		// Checks to make sure puzzle is complete
-		// If not complete the user can add another value to complete puzzle
-		Scanner input = new Scanner(System.in);
-		while (isEmpty(myPuzzle) != true) {
-			tryAgain(myPuzzle, input);	
+		// Solve the puzzle
+		// Prints out a message to the user
+		if(solvePuzzle(myPuzzle)) {
+			System.out.println("Congratulations you did it!\n");
 		}
-		input.close();
 		
-		// Print out the puzzle
-		System.out.println();
+		// Prints out the resulting puzzle
 		printPuzzle(myPuzzle);
-		System.out.println("Congratulations you did it!");
 }
 	
 	/*
@@ -100,164 +96,128 @@ public class PuzzleMain {
 	}
 	
 	/*
-	 * If the puzzle is not completed the user has the opportunity to add another value into the grid.
-	 * If the value is not valid or is zero the user can try again.
-	 * The result should be a completed puzzle.
-	 * @param is a 2D list of values in the puzzle
-	 * @param is a scanner object that will be used to read input from the user
-	 */
-	public static void tryAgain(List<List<Integer>> myPuzzle, Scanner input) {
-		
-		// Prints out the current puzzle
-		printPuzzle(myPuzzle);
-		System.out.println();
-		
-		// User can add additional value if it is valid
-		System.out.println("Please enter another value in the form '(x,y) 8' to complete puzzle \n"
-				+ "where (0,0) is the top left of the grid");
-		
-		// Collects x,y, and value from the user
-		String newVal = input.nextLine();
-		String[] vals = newVal.split(" ");
-		int x = Integer.valueOf(String.valueOf(vals[0].charAt(1)));
-		int y = Integer.valueOf(String.valueOf(vals[0].charAt(3)));
-		int val = Integer.valueOf(String.valueOf(vals[1]));
-		
-		// Checks to see if the position has a zero
-		if (myPuzzle.get(x).get(y) == 0) {
-			// Check to make sure the value works in the row and column
-			// if possibleRowColumn returns 0, it means value wasn't correct
-			// -------------------------------------------------------------
-			// TODO this does not properly check of the value was correct
-			if (possibleRowColumn(x, y, val, myPuzzle) != 0) {
-				// Adds value to the grid
-				myPuzzle.get(x).set(y, val);
-				//solve(myPuzzle);
-			} else {
-				System.out.println("Value was incorrect, please try another.");
-			}
-		} else {
-			System.out.println("Invalid position, please try another x,y.");
-		}
-			
-	}
-	
-	/*
-	 * Iterates through the rows and columns of the puzzle
-	 * Looking for 'empty' spaces on the grid or '0' which are place holders
-	 */
-	public static void solve(List<List<Integer>> myPuzzle) {
-		// Iterate through the rows
-		for (int i = 0; i < ROW_SIZE; i++) {
-			// Iterate through the columns
-			for (int j = 0; j < COL_SIZE; j++) {
-				// If the space holds a zero then we need to search for a number
-				// to replace it
-				if (myPuzzle.get(i).get(j) == 0) {
-					insertNum(i, j, myPuzzle);
-				}
-			}
-		}
-	}
-	
-	/*
-	 * Another way to iterate through the grid recursively... not sure if want to use 
-	 */
-//	public static void solve2(List<List<Integer>> myPuzzle, int x, int y) {
-//		if (x <= ROW_SIZE && y <= COL_SIZE && x >= 0 && y >= 0 && myPuzzle.get(x).get(y) != 0) {
-//			return;
-//		}
-//		if (x <= ROW_SIZE && y <= COL_SIZE && x >= 0 && y >= 0 && myPuzzle.get(x).get(y) == 0) {
-//			insertNum(x, y, myPuzzle);
-//		}
-//		if (x <= ROW_SIZE) {
-//			solve2(myPuzzle, x + 1, y);
-//		}
-//		if (y <= COL_SIZE) {
-//			solve2(myPuzzle, x, y + 1);
-//		}
-//		if (x > ROW_SIZE) {
-//			solve2(myPuzzle, x - 1, y);
-//		}
-//		if (y > COL_SIZE) {
-//			solve2(myPuzzle, x, y - 1);
-//		}
-//	}
-	
-	/*
-	 * @param 2D list of values in the grid
-	 * @return boolean is true if there are no more empty spaces on the grid
+	 * Iterates through the rows and columns 
+	 * @param myPuzzle is the 2D Array list of values on the grid
+	 * @returns true if the puzzle is completed
 	 */
 	public static boolean isEmpty(List<List<Integer>> myPuzzle) {
-		for (int i = 0; i < ROW_SIZE; i++)
+		for (int i = 0; i < ROW_SIZE; i++) {
 			for (int j = 0; j < COL_SIZE; j++) {
 				if (myPuzzle.get(i).get(j) == 0) {
 					return false;
 				}
 			}
+		}
 		return true;
 	}
 	
 	/*
-	 * Inserts a new number into the empty position
-	 * 
-	 * @param int row is the current row of the empty position
-	 * @param int col is the current column of the empty position
-	 * @param myPuzzle is a 2D array list of the puzzle we are solving 
+	 * Solves the sudoku puzzle
+	 * @param myPuzzle is the 2D Array list of values on the grid
+	 * @return true if the puzzle is completed
 	 */
-	public static void insertNum(int row, int col, List<List<Integer>> myPuzzle) {
-		
-		int num = 0;
-		
-		// Returns value to be inserted based on rows and columns
-		num = possibleRowColumn(row, col, num, myPuzzle);
-
-		
-		// This means that the above test cases were passed
-		// The number does not exist in the row or the column
-		if (num != 0) {
-			// Locates the quadrant we are on
-			int quadRow = row / 3 * 3;
-			int quadCol = col / 3 * 3;
-			for (int i = 0; i < QUADRANT_SIZE; i++) {
-				for (int j = 0; j < QUADRANT_SIZE; j++) {
-					if (myPuzzle.get(quadRow + i).get(quadCol + j) == num) {
-						num = 0;
+	public static boolean solvePuzzle(List<List<Integer>> myPuzzle) {
+		// Base case -- there are no more empty positions on board
+		if(isEmpty(myPuzzle)) {
+			return true;
+		}
+		// Iterate through the rows
+		for (int row = 0; row < ROW_SIZE; row++) {
+			// Iterate through the columns
+			for (int col = 0; col < COL_SIZE; col++) {
+				// If there is an empty position 
+				if (myPuzzle.get(row).get(col) == 0) {
+					// Iterate through possible inputs 1-9
+					for (int val = 1; val <= BOARD_SIZE ; val++) {
+						// If the value is valid placement on board recurse
+						if (isValid(row, col, val, myPuzzle)) {
+							// Plug value into puzzle
+							myPuzzle.get(row).set(col, val);
+							// Explore -- continue filling out board
+							if (solvePuzzle(myPuzzle)) {
+								return true;
+							}
+							// We hit a dead end -- remove value from board
+							myPuzzle.get(row).set(col, 0);
+						}
 					}
 				}
 			}
 		}
-		
-		// Set the index to the new or maybe not new value
-		// Zero could be inserted if no answer found
-		myPuzzle.get(row).set(col, num);
-	
+		// Puzzle was not able to be completed
+		System.out.println("Puzzle could not be completed");
+		return false;
 	}
 	
 	/*
-	 * Finds possible integer between (1-9) to be inserted into the grid.
-	 * Checks numbers in the same rows and columns
+	 * Checks if value is valid input for the position on board
 	 * @param row is the current row
 	 * @param col is the current column
 	 * @param num is the possible value to be inserted
 	 * @param myPuzzle is the 2D Array list of values on the grid
-	 * @return the possible value to be inserted at the (row,column) in the grid
+	 * @return true if value is valid 
 	 */
-	public static int possibleRowColumn(int row, int col, int num, List<List<Integer>> myPuzzle) {
-		// Iterate through the numbers 1-9
-		for (int i = 1; i < ROW_SIZE; i++) {
-			// Check if the number exists in the row
-			if (myPuzzle.get(row).indexOf(i) == -1) {
-				num = i;
-				// Check if the number exists in the column
-				// Subtracting 1 in the row because index starts at 0
-				// If number exists in the same column set number back to placeholder 0
-				if (myPuzzle.get(i - 1).get(col) == num) {
-					num = 0;
-				}
-			}	
+	public static boolean isValid(int row, int col, int val, List<List<Integer>> myPuzzle) {
+		// Returns false if not a valid column
+		if (!validColumn(col, val, myPuzzle)) {
+			return false;
 		}
-		return num;
+		// Returns false if not a valid row
+		if (!validRow(row, val, myPuzzle)) {
+			return false;
+		}
+		// Returns false if not a valid quadrant 
+		if (!validQuad(row, col, val, myPuzzle)) {
+			return false;
+		}
+		return true;
+	}
+	
+	/*
+	 * Returns true if the number does not exist in the quadrant 
+	 * @param col is the current column 
+	 * @param num is the number that might be a valid input for the puzzle
+	 * @param myPuzzle is a 2D array list
+	 */
+	public static boolean validQuad(int row, int col, int val, List<List<Integer>> myPuzzle) {
+		int quadRow = row / 3 * 3;
+		int quadCol = col / 3 * 3;
+		for (int i = 0; i < QUADRANT_SIZE; i++) {
+			for (int j = 0; j < QUADRANT_SIZE; j++) {
+				if (myPuzzle.get(quadRow + i).get(quadCol + j) == val) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	/*
+	 * Returns true if the number does not exist in the row
+	 * @param col is the current column 
+	 * @param num is the number that might be a valid input for the puzzle
+	 * @param myPuzzle is a 2D array list
+	 */
+	public static boolean validRow(int row, int value, List<List<Integer>> myPuzzle) {
+		if (myPuzzle.get(row).indexOf(value) == -1) {
+			return true;
+		}
+		return false;
+	}
+	
+	/*
+	 * Returns true if the number does not exist in the column
+	 * @param col is the current column 
+	 * @param num is the number that might be a valid input for the puzzle
+	 * @param myPuzzle is a 2D array list
+	 */
+	public static boolean validColumn(int col, int num, List<List<Integer>> myPuzzle) {
+		for (int i = 0; i < ROW_SIZE; i++) {
+			if (myPuzzle.get(i).get(col) == num) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	/*
